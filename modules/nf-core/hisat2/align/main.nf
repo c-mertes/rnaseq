@@ -32,7 +32,9 @@ process HISAT2_ALIGN {
         strandedness = meta.single_end ? '--rna-strandness R' : '--rna-strandness RF'
     }
     ss = "$splicesites" ? "--known-splicesite-infile $splicesites" : ''
-    def seq_center = params.seq_center ? "--rg-id ${prefix} --rg SM:$prefix --rg CN:${params.seq_center.replaceAll('\\s','_')}" : "--rg-id ${prefix} --rg SM:$prefix"
+    def seq_center = params.seq_center ? "CN:${params.seq_center.replaceAll('\\s','_')}" : ''
+    def seq_platform = params.seq_platform ? "PL:${params.seq_platform.replaceAll('\\s','_')}" : ''
+    def read_group = "--rg-id ${prefix} --rg SM:$prefix ${seq_center ? "--rg $seq_center" : ''} ${seq_platform ? "--rg $seq_platform" : ''}"
     if (meta.single_end) {
         def unaligned = params.save_unaligned || params.contaminant_screening ? "--un-gz ${prefix}.unmapped.fastq.gz" : ''
         """
@@ -44,7 +46,7 @@ process HISAT2_ALIGN {
             $ss \\
             --summary-file ${prefix}.hisat2.summary.log \\
             --threads $task.cpus \\
-            $seq_center \\
+            $read_group \\
             $unaligned \\
             $args \\
             | samtools view -bS -F 4 -F 256 - > ${prefix}.bam
@@ -67,7 +69,7 @@ process HISAT2_ALIGN {
             $ss \\
             --summary-file ${prefix}.hisat2.summary.log \\
             --threads $task.cpus \\
-            $seq_center \\
+            $read_group \\
             $unaligned \\
             --no-mixed \\
             --no-discordant \\

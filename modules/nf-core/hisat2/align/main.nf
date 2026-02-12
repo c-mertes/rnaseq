@@ -34,7 +34,12 @@ process HISAT2_ALIGN {
     ss = "$splicesites" ? "--known-splicesite-infile $splicesites" : ''
     def seq_center = params.seq_center ? "CN:${params.seq_center.replaceAll('\\s','_')}" : ''
     def seq_platform = params.seq_platform ? "PL:${params.seq_platform.replaceAll('\\s','_')}" : ''
-    def read_group = "--rg-id ${prefix} --rg SM:$prefix ${seq_center ? "--rg $seq_center" : ''} ${seq_platform ? "--rg $seq_platform" : ''}"
+    def rg_tags = []
+    rg_tags << "ID:${prefix}"
+    rg_tags << "SM:${prefix}"
+    if (seq_center) rg_tags << seq_center
+    if (seq_platform) rg_tags << seq_platform
+    def read_group = rg_tags.collect { "--rg $it" }.join(' ')
     if (meta.single_end) {
         def unaligned = params.save_unaligned || params.contaminant_screening ? "--un-gz ${prefix}.unmapped.fastq.gz" : ''
         """
